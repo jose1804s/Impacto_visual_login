@@ -35,10 +35,15 @@ public class User implements UserDetails {
     @Column(nullable = false)
     String username;
     @Column(nullable = false)
+    String persontype;
+    String documenttype;
+    String documentnumber;
     String lastname;
     String firstname;
-    String country;
+    String address;
     String password;
+    String email;
+    String phone;
     @Enumerated(EnumType.STRING) 
     Role role;
 
