@@ -34,9 +34,11 @@ public class AuthService {
             User user = optionalUser.get();
             String token = jwtService.getToken(user);
             Integer id = user.getId();
+            Role role= user.getRole();
             return AuthResponse.builder()
                 .token(token)
                 .id(id)
+                .role(role)
                 .build();
         } else {
             // Si no se encuentra el usuario, lanzar una excepción de autenticación
@@ -62,7 +64,7 @@ public class AuthService {
     
         User user = User.builder()
             .username(request.getUsername())
-            .password(passwordEncoder.encode(password))
+            .password(passwordEncoder.encode(request.getPassword()))
             .persontype(request.getPersontype())
             .documenttype(request.getDocumenttype())
             .documentnumber(request.getDocumentnumber())

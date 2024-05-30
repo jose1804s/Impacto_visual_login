@@ -28,7 +28,6 @@ public class UserService {
 
         return new UserResponse("El usuario se registró satisfactoriamente");
     }
-
     public UserDTO getUser(Integer id) {
         User user= userRepository.findById(id).orElse(null);
        
