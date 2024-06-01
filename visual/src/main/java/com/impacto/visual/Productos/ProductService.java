@@ -5,7 +5,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -27,5 +27,8 @@ public class ProductService {
     }
     public Producto getProductoById(Long id) {
         return productoRepository.findById(id).orElse(null);
+    }
+    public List<Producto> getAllProductos() {
+        return productoRepository.findAll();
     }
 }

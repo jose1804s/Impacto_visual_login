@@ -7,42 +7,67 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.web.bind.annotation.*;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/productos")
 @RequiredArgsConstructor
+@CrossOrigin(origins = "http://localhost:3000", allowCredentials = "true")
 public class ProductoController {
     private final ProductService productService;
+    private final Logger logger = LoggerFactory.getLogger(ProductoController.class);
 
     @PostMapping("/upload")
-    public ResponseEntity<Producto> createProducto(@ModelAttribute ProductoDto productRequest) {
+    public ResponseEntity<?> createProducto(@ModelAttribute ProductoDto productRequest) {
         UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         boolean isAdmin = userDetails.getAuthorities().stream()
             .map(GrantedAuthority::getAuthority)
             .anyMatch(role -> role.equals("ADMIN")); 
 
         if (!isAdmin) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build(); 
+            logger.warn("El usuario {} intentó subir un producto sin privilegios de administrador", userDetails.getUsername());
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Acceso denegado: Se requieren privilegios de administrador.");
         }
 
         try {
             Producto producto = productService.saveProduct(productRequest);
+            logger.info("Producto {} subido exitosamente por el usuario {}", producto.getId(), userDetails.getUsername());
             return ResponseEntity.ok(producto);
         } catch (IOException e) {
-            return ResponseEntity.badRequest().build();
+            logger.error("Ocurrió una IOException al subir el producto: {}", e.getMessage());
+            return ResponseEntity.badRequest().body("Ocurrió un error al procesar la carga del producto.");
+        } catch (Exception e) {
+            logger.error("Ocurrió un error inesperado al subir el producto: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Ocurrió un error inesperado.");
         }
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<Producto> getProductoById(@PathVariable Long id) {
-        Producto producto = productService.getProductoById(id);
-        if (producto != null) {
-            return ResponseEntity.ok(producto);
-        } else {
-            return ResponseEntity.notFound().build();
+        try {
+            Producto producto = productService.getProductoById(id);
+            if (producto != null) {
+                return ResponseEntity.ok(producto);
+            } else {
+                return ResponseEntity.notFound().build();
+            }
+        } catch (Exception e) {
+            logger.error("Ocurrió un error al obtener el producto con ID {}: {}", id, e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        }
+    }
+    @GetMapping
+    public ResponseEntity<List<Producto>> getAllProductos() {
+        try {
+            List<Producto> productos = productService.getAllProductos();
+            return ResponseEntity.ok(productos);
+        } catch (Exception e) {
+            logger.error("Ocurrió un error inesperado al obtener los productos: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
     }
 }
