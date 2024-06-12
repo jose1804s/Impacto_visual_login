@@ -3,6 +3,7 @@ package com.impacto.visual.Productos;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.data.rest.webmvc.ResourceNotFoundException;
 
 import java.io.IOException;
 import java.util.List;
@@ -30,5 +31,20 @@ public class ProductService {
     }
     public List<Producto> getAllProductos() {
         return productoRepository.findAll();
+    }
+    public Producto updateProducto(Long id, ProductoDto productoDetails) throws IOException {
+        Producto producto = productoRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Producto no encontrado con el id: " + id));
+
+        producto.setName(productoDetails.getName());
+        producto.setDescription(productoDetails.getDescription());
+        producto.setPrice(productoDetails.getPrice());
+
+        MultipartFile image = productoDetails.getImage();
+        if (image != null && !image.isEmpty()) {
+            producto.setImage(image.getBytes());
+        }
+
+        return productoRepository.save(producto);
     }
 }
